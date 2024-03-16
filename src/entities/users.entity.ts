@@ -1,7 +1,8 @@
 import { IsNotEmpty } from 'class-validator';
-import { BaseEntity, Entity, PrimaryGeneratedColumn, Column, Unique, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { BaseEntity, Entity, PrimaryGeneratedColumn, Column, Unique, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
 import { User } from '@interfaces/users.interface';
 import { UserRole } from '@/constants/enum/roles/roles';
+import { ChallengeEntity } from './challenge.entity';
 
 @Entity()
 export class UserEntity extends BaseEntity implements User {
@@ -16,7 +17,7 @@ export class UserEntity extends BaseEntity implements User {
   @Column({
     default: 0,
   })
-  points : number;
+  points: number;
 
   @Column({
     type: 'enum',
@@ -41,4 +42,7 @@ export class UserEntity extends BaseEntity implements User {
   @Column()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => ChallengeEntity, challenge => challenge.createdBy)
+  challengesCreated: ChallengeEntity[];
 }

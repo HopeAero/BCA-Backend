@@ -5,7 +5,7 @@ import { UserEntity } from '@entities/users.entity';
 import { HttpException } from '@/exceptions/httpException';
 import { DataStoredInToken, RequestWithUser } from '@interfaces/auth.interface';
 
-const getAuthorization = (req) => {
+const getAuthorization = req => {
   const coockie = req.cookies['Authorization'];
   if (coockie) return coockie;
 
@@ -13,7 +13,7 @@ const getAuthorization = (req) => {
   if (header) return header.split('Bearer ')[1];
 
   return null;
-}
+};
 
 export const AuthMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
   try {
@@ -21,9 +21,9 @@ export const AuthMiddleware = async (req: RequestWithUser, res: Response, next: 
 
     if (Authorization) {
       const { id } = (await verify(Authorization, SECRET_KEY)) as DataStoredInToken;
-      const findUser = await UserEntity.findOne(id, { select: ['id', 'email', 'password'] });
+      const findUser = await UserEntity.findOne(id, { select: ['id', 'email', 'role'] });
 
-      if (findUser) {
+      if (findUser && findUser.role === 'player') {
         req.user = findUser;
         next();
       } else {
@@ -43,7 +43,7 @@ export const AdminMiddleware = async (req: RequestWithUser, res: Response, next:
 
     if (Authorization) {
       const { id } = (await verify(Authorization, SECRET_KEY)) as DataStoredInToken;
-      const findUser = await UserEntity.findOne(id, { select: ['id', 'email', 'password', 'role'] });
+      const findUser = await UserEntity.findOne(id, { select: ['id', 'email', 'role'] });
 
       if (findUser && findUser.role === 'admin') {
         req.user = findUser;
@@ -54,8 +54,7 @@ export const AdminMiddleware = async (req: RequestWithUser, res: Response, next:
     } else {
       next(new HttpException(404, 'Authentication token missing'));
     }
-
   } catch (error) {
     next(new HttpException(401, 'Wrong authentication token'));
   }
-}
+};
