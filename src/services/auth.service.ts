@@ -7,6 +7,7 @@ import { UserEntity } from '@entities/users.entity';
 import { HttpException } from '@/exceptions/httpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
+import { UserRole } from '@/constants/enum/roles/roles';
 
 const createToken = (user: User): TokenData => {
   const dataStoredInToken: DataStoredInToken = { id: user.id };
@@ -32,9 +33,18 @@ export class AuthService extends Repository<UserEntity> {
     return createUserData;
   }
 
-  public async login(userData: User): Promise<{ cookie: string; findUser: User }> {
+  public async signupAdmin(userData: User): Promise<User> {
     const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
-    if (!findUser) throw new HttpException(409, `This email ${userData.email} was not found`);
+    if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
+
+    const hashedPassword = await hash(userData.password, 10);
+    const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword, role: UserRole.ADMIN }).save();
+    return createUserData;
+  }
+
+  public async login(userData: User): Promise<{ cookie: string; tokenData: TokenData, findUser: User }> {
+    const findUser: User = await UserEntity.findOne({ where: { username: userData.username } });
+    if (!findUser) throw new HttpException(409, `This username ${userData.username} was not found`);
 
     const isPasswordMatching: boolean = await compare(userData.password, findUser.password);
     if (!isPasswordMatching) throw new HttpException(409, "Password not matching");
@@ -42,7 +52,7 @@ export class AuthService extends Repository<UserEntity> {
     const tokenData = createToken(findUser);
     const cookie = createCookie(tokenData);
 
-    return { cookie, findUser };
+    return { cookie, tokenData, findUser };
   }
 
   public async logout(userData: User): Promise<User> {

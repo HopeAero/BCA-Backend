@@ -36,3 +36,26 @@ export const AuthMiddleware = async (req: RequestWithUser, res: Response, next: 
     next(new HttpException(401, 'Wrong authentication token'));
   }
 };
+
+export const AdminMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+  try {
+    const Authorization = getAuthorization(req);
+
+    if (Authorization) {
+      const { id } = (await verify(Authorization, SECRET_KEY)) as DataStoredInToken;
+      const findUser = await UserEntity.findOne(id, { select: ['id', 'email', 'password', 'role'] });
+
+      if (findUser && findUser.role === 'admin') {
+        req.user = findUser;
+        next();
+      } else {
+        next(new HttpException(401, 'Wrong authentication or your role is not admin'));
+      }
+    } else {
+      next(new HttpException(404, 'Authentication token missing'));
+    }
+
+  } catch (error) {
+    next(new HttpException(401, 'Wrong authentication token'));
+  }
+}
