@@ -13,6 +13,7 @@ export class CreateChallengeDto {
   @IsNotEmpty()
   public description: string;
 
+  @IsNumber()
   @IsNotEmpty()
   public points: number;
 
@@ -30,6 +31,41 @@ export class CreateChallengeDto {
 
   @IsNumber()
   @IsNotEmpty()
+  public limitPlayers: number;
+
+  @IsOptional()
+  @IsBoolean()
+  public isActivate: boolean;
+}
+
+export class UpdateChallengeDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(4)
+  public name: string;
+
+  @IsOptional()
+  @IsString()
+  public description: string;
+
+  @IsOptional()
+  @IsNumber()
+  public points: number;
+
+  @IsOptional()
+  @IsEnum(ChallengeCategory)
+  public category: string;
+
+  @IsOptional()
+  @IsEnum(ChallengeDifficulty)
+  public difficulty: string;
+
+  @IsOptional()
+  @IsEnum(ChallengeType)
+  public type: string;
+
+  @IsOptional()
+  @IsNumber()
   public limitPlayers: number;
 
   @IsOptional()
