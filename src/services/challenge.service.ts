@@ -6,6 +6,9 @@ import { Challenge } from '@/interfaces/challenges.interface';
 import { User } from '@/interfaces/users.interface';
 import * as corn from 'node-cron';
 import * as fns from 'date-fns';
+import { PlayerChallenge } from '@/interfaces/playerChallenge.interface';
+import { PlayerChallengeEntity } from '@/entities/playerChallenge.entity';
+import { UserEntity } from '@/entities/users.entity';
 
 @Service()
 @EntityRepository()
@@ -36,13 +39,81 @@ export class ChallengeService extends Repository<ChallengeEntity> {
 
     console.log('Cron job initialized');
   }
+
+  public async findChallengeWithPlayers(challengeId: number): Promise<Challenge & { players: User[] }> {
+    const challenge: Challenge = await ChallengeEntity.createQueryBuilder('challenge')
+      .leftJoinAndSelect('challenge.playerChallenges', 'playerChallenge')
+      .leftJoinAndSelect('playerChallenge.player', 'player')
+      .select([
+        'challenge.id',
+        'challenge.name',
+        'challenge.description',
+        'challenge.points',
+        'challenge.category',
+        'challenge.difficulty',
+        'challenge.type',
+        'challenge.limitPlayers',
+        'challenge.isActivate',
+        'player.id',
+        'player.username',
+        'player.role',
+        'player.points',
+        'player.ticketDiary',
+        'player.ticketWeekly',
+        'player.ticketMonthly',
+      ])
+      .where('challenge.id = :challengeId', { challengeId })
+      .getOne();
+
+    if (!challenge) {
+      throw new Error('Challenge not found');
+    }
+
+    const players: User[] = await UserEntity.createQueryBuilder('player')
+      .leftJoin('player.playerChallenges', 'playerChallenge')
+      .where('playerChallenge.challengeId = :challengeId', { challengeId })
+      .andWhere('playerChallenge.deletedAt IS NULL')
+      .select(['player.id', 'player.username', 'player.role', 'player.points', 'player.ticketDiary', 'player.ticketWeekly', 'player.ticketMonthly'])
+      .orderBy('player.id', 'ASC') // Order by player id in ascending order
+      .getMany();
+
+    return { ...challenge, players };
+  }
+
   public async findAllChallenge(): Promise<Challenge[]> {
-    const challenges: Challenge[] = await ChallengeEntity.find();
+    const challenges: Challenge[] = await ChallengeEntity.createQueryBuilder('challenge')
+      .leftJoinAndSelect('challenge.createdBy', 'createdBy')
+      .select([
+        'challenge',
+        'createdBy.id',
+        'createdBy.username',
+        'createdBy.role',
+        'createdBy.points',
+        'createdBy.ticketDiary',
+        'createdBy.ticketWeekly',
+        'createdBy.ticketMonthly',
+      ])
+      .getMany();
+
     return challenges;
   }
 
   public async findChallengeById(challengeId: number): Promise<Challenge> {
-    const findChallenge: Challenge = await ChallengeEntity.findOne({ where: { id: challengeId } });
+    const findChallenge: Challenge = await ChallengeEntity.createQueryBuilder('challenge')
+      .leftJoinAndSelect('challenge.createdBy', 'createdBy')
+      .select([
+        'challenge',
+        'createdBy.id',
+        'createdBy.username',
+        'createdBy.role',
+        'createdBy.points',
+        'createdBy.ticketDiary',
+        'createdBy.ticketWeekly',
+        'createdBy.ticketMonthly',
+      ])
+      .where('challenge.id = :id', { id: challengeId })
+      .getOne();
+
     if (!findChallenge) throw new HttpException(409, "Challenge doesn't exist");
 
     return findChallenge;

@@ -15,6 +15,7 @@ export class ChallengeRoute implements Routes {
   }
 
   private initializeRoutes() {
+    this.router.get(`${this.path}/players/:challengeId`, AuthMiddleware, this.challenge.getPlayerChallenges);
     this.router.get(`${this.path}`, AuthMiddleware, this.challenge.getChallenges);
     this.router.get(`${this.path}/:id`, AuthMiddleware, this.challenge.getChallengeById);
     this.router.post(`${this.path}`, AdminMiddleware, ValidationMiddleware(CreateChallengeDto), this.challenge.createChallenge);

@@ -1,8 +1,9 @@
 import { IsNotEmpty } from 'class-validator';
-import { BaseEntity, Entity, PrimaryGeneratedColumn, Column, Unique, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
+import { BaseEntity, Entity, PrimaryGeneratedColumn, Column, Unique, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { User } from '@interfaces/users.interface';
 import { UserRole } from '@/constants/enum/roles/roles';
 import { ChallengeEntity } from './challenge.entity';
+import { PlayerChallengeEntity } from './playerChallenge.entity';
 
 @Entity()
 export class UserEntity extends BaseEntity implements User {
@@ -26,6 +27,21 @@ export class UserEntity extends BaseEntity implements User {
   })
   role: UserRole;
 
+  @Column({
+    default: 1,
+  })
+  ticketDiary: number;
+
+  @Column({
+    default: 1,
+  })
+  ticketWeekly: number;
+
+  @Column({
+    default: 1,
+  })
+  ticketMonthly: number;
+
   @Column()
   @IsNotEmpty()
   @Unique(['email'])
@@ -45,4 +61,7 @@ export class UserEntity extends BaseEntity implements User {
 
   @OneToMany(() => ChallengeEntity, challenge => challenge.createdBy)
   challengesCreated: ChallengeEntity[];
+
+  @OneToMany(() => PlayerChallengeEntity, playerChallenge => playerChallenge.player)
+  playerChallenges: PlayerChallengeEntity[];
 }

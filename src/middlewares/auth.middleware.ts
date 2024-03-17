@@ -23,7 +23,7 @@ export const AuthMiddleware = async (req: RequestWithUser, res: Response, next: 
       const { id } = (await verify(Authorization, SECRET_KEY)) as DataStoredInToken;
       const findUser = await UserEntity.findOne(id, { select: ['id', 'email', 'role'] });
 
-      if (findUser && findUser.role === 'player') {
+      if ((findUser && findUser.role === 'player') || findUser.role === 'admin') {
         req.user = findUser;
         next();
       } else {

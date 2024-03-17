@@ -1,5 +1,6 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import { Challenge } from '@/interfaces/challenges.interface';
+import { PlayerChallenge } from '@/interfaces/playerChallenge.interface';
 import { User } from '@/interfaces/users.interface';
 import { ChallengeService } from '@/services/challenge.service';
 import { NextFunction, Request, Response } from 'express';
@@ -7,6 +8,18 @@ import { Container } from 'typedi';
 
 export class ChallengeController {
   public challenge = Container.get(ChallengeService);
+
+  public getPlayerChallenges = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const challengeId = Number(req.params.challengeId);
+      const findAllPlayerChallengesData: Challenge & { players: User[] } = await this.challenge.findChallengeWithPlayers(challengeId);
+
+      res.status(200).json({ data: findAllPlayerChallengesData, message: 'findAll' });
+    } catch (error) {
+      console.log(error);
+      next(error);
+    }
+  };
 
   public getChallenges = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

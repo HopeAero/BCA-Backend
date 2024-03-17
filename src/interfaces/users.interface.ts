@@ -5,6 +5,9 @@ export interface User {
   username: string;
   points?: number;
   role?: UserRole;
+  ticketDiary: number;
+  ticketWeekly: number;
+  ticketMonthly: number;
   email: string;
   password: string;
 }

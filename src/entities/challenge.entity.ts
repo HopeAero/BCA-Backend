@@ -2,8 +2,9 @@ import { ChallengeCategory } from '@/constants/enum/challenges/category';
 import { ChallengeDifficulty } from '@/constants/enum/challenges/difficulty';
 import { ChallengeType } from '@/constants/enum/challenges/type';
 import { Challenge } from '@/interfaces/challenges.interface';
-import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { BaseEntity, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { UserEntity } from './users.entity';
+import { PlayerChallengeEntity } from './playerChallenge.entity';
 
 @Entity()
 export class ChallengeEntity extends BaseEntity implements Challenge {
@@ -47,4 +48,7 @@ export class ChallengeEntity extends BaseEntity implements Challenge {
 
   @ManyToOne(() => UserEntity, user => user.challengesCreated)
   createdBy: UserEntity;
+
+  @OneToMany(() => PlayerChallengeEntity, playerChallenge => playerChallenge.challenge)
+  playerChallenges: PlayerChallengeEntity[];
 }
