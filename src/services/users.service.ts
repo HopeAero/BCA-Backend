@@ -4,10 +4,37 @@ import { Service } from 'typedi';
 import { UserEntity } from '@entities/users.entity';
 import { HttpException } from '@/exceptions/httpException';
 import { User } from '@interfaces/users.interface';
+import * as corn from 'node-cron';
 
 @Service()
 @EntityRepository()
 export class UserService extends Repository<UserEntity> {
+  constructor() {
+    super();
+    this.initializeCronJob();
+  }
+
+  public async initializeCronJob() {
+    console.log('Running a ticket every 1 day');
+    corn.schedule('0 0 * * *', async () => {
+      console.log('Updating ticket diary availability');
+      await this.giveDailyTicket();
+    });
+
+    console.log('Running a ticket every 1 week');
+    corn.schedule('0 0 * * 1', async () => {
+      console.log('Updating ticket weekly availability');
+      await this.giveMonthlyTicket();
+    });
+
+    console.log('Running a ticket every 1 month');
+    corn.schedule('0 0 1 * *', async () => {
+      console.log('Updating challenge montly availability');
+      await this.giveMonthlyTicket();
+    });
+
+    console.log('Cron job initialized');
+  }
   public async findAllUser(): Promise<User[]> {
     const users: User[] = await UserEntity.find();
     return users;
@@ -47,5 +74,38 @@ export class UserService extends Repository<UserEntity> {
 
     await UserEntity.delete({ id: userId });
     return findUser;
+  }
+
+  public async giveDailyTicket(): Promise<void> {
+    // Get all users
+    const users = await UserEntity.find();
+
+    // Give each user a daily ticket
+    for (const user of users) {
+      user.ticketDiary += 1;
+      await UserEntity.update(user.id, { ticketDiary: user.ticketDiary });
+    }
+  }
+
+  public async giveWeeklyTicket(): Promise<void> {
+    // Get all users
+    const users = await UserEntity.find();
+
+    // Give each user a weekly ticket
+    for (const user of users) {
+      user.ticketMonthly += 1;
+      await UserEntity.update(user.id, { ticketWeekly: user.ticketWeekly });
+    }
+  }
+
+  public async giveMonthlyTicket(): Promise<void> {
+    // Get all users
+    const users = await UserEntity.find();
+
+    // Give each user a monthly ticket
+    for (const user of users) {
+      user.ticketMonthly += 1;
+      await UserEntity.update(user.id, { ticketMonthly: user.ticketMonthly });
+    }
   }
 }

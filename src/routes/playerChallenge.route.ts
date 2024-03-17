@@ -4,6 +4,7 @@ import { ValidationMiddleware } from '@middlewares/validation.middleware';
 import { AdminMiddleware, AuthMiddleware } from '@/middlewares/auth.middleware';
 import { PlayerChallengeController } from '@/controllers/playerChallenge.controller';
 import { CreatePlayerChallengeDto, UpdatePlayerChallengeDto } from '@/dtos/playerChallenge.dto';
+import upload from '@/middlewares/multer.middleware';
 
 export class PlayerChallengeRoute implements Routes {
   public path = '/playerChallenge';
@@ -27,6 +28,7 @@ export class PlayerChallengeRoute implements Routes {
       ValidationMiddleware(CreatePlayerChallengeDto),
       this.playerChallenge.createPlayerChallenge,
     );
+    this.router.post(`${this.path}/seedResult/:challengeId`, AuthMiddleware, upload.single('result'), this.playerChallenge.seedResult);
     this.router.post(`${this.path}`, AuthMiddleware, ValidationMiddleware(CreatePlayerChallengeDto), this.playerChallenge.createPlayerChallenge);
     this.router.get(`${this.path}/:id`, AuthMiddleware, this.playerChallenge.getPlayerChallengeById);
     this.router.put(`${this.path}/:id`, AuthMiddleware, ValidationMiddleware(UpdatePlayerChallengeDto), this.playerChallenge.updatePlayerChallenge);

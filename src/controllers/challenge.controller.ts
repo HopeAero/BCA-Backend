@@ -5,6 +5,7 @@ import { User } from '@/interfaces/users.interface';
 import { ChallengeService } from '@/services/challenge.service';
 import { NextFunction, Request, Response } from 'express';
 import { Container } from 'typedi';
+import multer from 'multer';
 
 export class ChallengeController {
   public challenge = Container.get(ChallengeService);

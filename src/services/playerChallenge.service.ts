@@ -1,4 +1,6 @@
+import { POSTGRES_HOST } from '@/config';
 import { PlayerChallengeStatus } from '@/constants/enum/playerChallenges/status';
+import { UpdateChallengeDto } from '@/dtos/challenge.dto';
 import { CreatePlayerChallengeDto } from '@/dtos/playerChallenge.dto';
 import { ChallengeEntity } from '@/entities/challenge.entity';
 import { PlayerChallengeEntity } from '@/entities/playerChallenge.entity';
@@ -7,8 +9,9 @@ import { HttpException } from '@/exceptions/httpException';
 import { Challenge } from '@/interfaces/challenges.interface';
 import { PlayerChallenge } from '@/interfaces/playerChallenge.interface';
 import { User } from '@/interfaces/users.interface';
+import { Request } from 'express';
 import { Service } from 'typedi';
-import { EntityRepository, Repository } from 'typeorm';
+import { EntityRepository, Equal, Not, Repository } from 'typeorm';
 
 @Service()
 @EntityRepository()
@@ -141,6 +144,12 @@ export class PlayerChallengeService extends Repository<PlayerChallengeEntity> {
     if (findPlayerChallenge.status === 'winner') throw new HttpException(409, 'PlayerChallenge already has a winner');
 
     await PlayerChallengeEntity.update(findPlayerChallenge.id, { ...playerChallengeData, status: PlayerChallengeStatus.WINNER });
+    const otherPlayerChallenges: PlayerChallenge[] = await PlayerChallengeEntity.find({
+      where: { challenge: findChallenge, player: Not(Equal(userData)) },
+    });
+    for (const pc of otherPlayerChallenges) {
+      await PlayerChallengeEntity.update(pc.id, { ...pc, status: PlayerChallengeStatus.LOSER });
+    }
 
     await ChallengeEntity.update(challengeId, { ...findChallenge, isActivate: false });
 

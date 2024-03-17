@@ -5,8 +5,12 @@ import { RequestWithUser } from '@/interfaces/auth.interface';
 import { Container } from 'typedi';
 import { ChallengeEntity } from '@/entities/challenge.entity';
 import { User } from '@/interfaces/users.interface';
-import { CreateChallengeDto } from '@/dtos/challenge.dto';
 import { CreatePlayerChallengeDto } from '@/dtos/playerChallenge.dto';
+import { PlayerChallengeEntity } from '@/entities/playerChallenge.entity';
+import { HttpException } from '@/exceptions/httpException';
+import { UserEntity } from '@/entities/users.entity';
+import { PlayerChallengeStatus } from '@/constants/enum/playerChallenges/status';
+
 export class PlayerChallengeController {
   public playerChallenge = Container.get(PlayerChallengeService);
 
@@ -75,6 +79,41 @@ export class PlayerChallengeController {
 
       res.status(200).json({ data: updatePlayerChallengeData, message: 'update' });
     } catch (error) {
+      next(error);
+    }
+  };
+
+  public seedResult = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const challengeId = Number(req.params.challengeId);
+      const userData: User = req.user;
+      const result = req.file;
+
+      const findChallenge = await ChallengeEntity.findOne({ where: { id: challengeId } });
+
+      if (!findChallenge) throw new HttpException(409, "Challenge doesn't exist");
+
+      const findUser = await UserEntity.findOne({ where: { id: userData.id } });
+
+      if (!findUser) throw new HttpException(409, "User doesn't exist");
+
+      const findPlayerChallenge: PlayerChallenge = await PlayerChallengeEntity.findOne({ where: { challenge: findChallenge, player: findUser } });
+
+      if (!findPlayerChallenge) throw new HttpException(409, "You aren't in this challenge");
+
+      if (findPlayerChallenge.status === 'sent') throw new HttpException(409, 'PlayerChallenge already sent a result');
+
+      if (findPlayerChallenge.status === 'winner') throw new HttpException(409, 'PlayerChallenge already has a winner');
+
+      if (result === undefined) throw new HttpException(409, 'Result is required');
+
+      const resultUrl = `http://localhost:3000/uploads/${result.path.replace(/\\/g, '/')}`;
+
+      await PlayerChallengeEntity.update(findPlayerChallenge.id, { ...findPlayerChallenge, file: resultUrl, status: PlayerChallengeStatus.SENT });
+
+      res.status(201).json({ data: resultUrl, message: 'PlayerChallenge successfully created' });
+    } catch (error) {
+      console.log(error);
       next(error);
     }
   };
