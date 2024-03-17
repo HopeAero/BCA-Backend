@@ -40,8 +40,25 @@ export class UserService extends Repository<UserEntity> {
     return users;
   }
 
+  public async rankingUser(): Promise<User[]> {
+    const users: User[] = await UserEntity.find({
+      select: ['id', 'username', 'points'],
+      order: {
+        points: 'DESC',
+      },
+    });
+    return users;
+  }
+
   public async findUserById(userId: number): Promise<User> {
     const findUser: User = await UserEntity.findOne({ where: { id: userId } });
+    if (!findUser) throw new HttpException(409, "User doesn't exist");
+
+    return findUser;
+  }
+
+  public async findUserMyData(userData: User): Promise<User> {
+    const findUser: User = await UserEntity.findOne({ where: { id: userData.id } });
     if (!findUser) throw new HttpException(409, "User doesn't exist");
 
     return findUser;

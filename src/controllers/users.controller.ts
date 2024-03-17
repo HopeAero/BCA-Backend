@@ -2,15 +2,37 @@ import { NextFunction, Request, Response } from 'express';
 import { Container } from 'typedi';
 import { User } from '@interfaces/users.interface';
 import { UserService } from '@services/users.service';
+import { RequestWithUser } from '@/interfaces/auth.interface';
 
 export class UserController {
   public user = Container.get(UserService);
+
+  public rankingUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const findAllUsersData: User[] = await this.user.rankingUser();
+
+      res.status(200).json({ data: findAllUsersData, message: 'ranking' });
+    } catch (error) {
+      next(error);
+    }
+  };
 
   public getUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const findAllUsersData: User[] = await this.user.findAllUser();
 
       res.status(200).json({ data: findAllUsersData, message: 'findAll' });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getUserMyData = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userData: User = req.user;
+      const findUserData: User = await this.user.findUserMyData(userData);
+
+      res.status(200).json({ data: findUserData, message: 'profile' });
     } catch (error) {
       next(error);
     }
