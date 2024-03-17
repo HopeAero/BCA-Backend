@@ -137,6 +137,8 @@ export class PlayerChallengeService extends Repository<PlayerChallengeEntity> {
     const userData = await UserEntity.findOne({ where: { id: playerId } });
     if (!userData) throw new HttpException(409, "User doesn't exist");
 
+    if (findChallenge.isActivate === false) throw new HttpException(409, 'Challenge is not available');
+
     const findPlayerChallenge: PlayerChallenge = await PlayerChallengeEntity.findOne({ where: { challenge: findChallenge, player: userData } });
 
     if (!findPlayerChallenge) throw new HttpException(409, "PlayerChallenge doesn't exist");
@@ -145,7 +147,7 @@ export class PlayerChallengeService extends Repository<PlayerChallengeEntity> {
 
     await PlayerChallengeEntity.update(findPlayerChallenge.id, { ...playerChallengeData, status: PlayerChallengeStatus.WINNER });
     const otherPlayerChallenges: PlayerChallenge[] = await PlayerChallengeEntity.find({
-      where: { challenge: findChallenge, player: Not(Equal(userData)) },
+      where: { challenge: findChallenge, player: Not(Equal(userData.id)) },
     });
     for (const pc of otherPlayerChallenges) {
       await PlayerChallengeEntity.update(pc.id, { ...pc, status: PlayerChallengeStatus.LOSER });
@@ -153,8 +155,7 @@ export class PlayerChallengeService extends Repository<PlayerChallengeEntity> {
 
     await ChallengeEntity.update(challengeId, { ...findChallenge, isActivate: false });
 
-    await UserEntity.update(userData.id, { ...userData, points: userData.points + findChallenge.points });
-
+    await UserEntity.update(userData.id, { points: userData.points + findChallenge.points });
     return;
   }
 

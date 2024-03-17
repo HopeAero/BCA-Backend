@@ -128,6 +128,7 @@ export class PlayerChallengeController {
 
       res.status(200).json({ message: 'PlayerChallenge winner successfully updated' });
     } catch (error) {
+      console.log(error);
       next(error);
     }
   };
